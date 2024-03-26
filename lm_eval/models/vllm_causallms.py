@@ -93,6 +93,12 @@ class VLLM(TemplateLM):
             if isinstance(batch_size, str) and "auto" in batch_size
             else batch_size
         )
+
+        if any([model_str in pretrained for model_str in ['labrador_7b_pretrained']]):
+            from ibm_models import GPTMegatronConfig
+            from transformers import CONFIG_MAPPING
+            CONFIG_MAPPING['gpt_megatron'] = GPTMegatronConfig
+
         if self.data_parallel_size <= 1:
             self.model = LLM(**self.model_args)
         else:
@@ -107,7 +113,17 @@ class VLLM(TemplateLM):
             eval_logger.info("Manual batching is not compatible with data parallelism.")
 
             from transformers import AutoConfig
+            from ibm_models import GPTMegatronConfig
 
+            if any([model_str in pretrained for model_str in ['labrador_7b_pretrained']]):
+                from transformers import CONFIG_MAPPING
+                CONFIG_MAPPING['gpt_megatron'] = GPTMegatronConfig
+                # print(CONFIG_MAPPING)
+                # input()
+                # self._config = GPTMegatronConfig.from_pretrained(
+                #     pretrained, trust_remote_code=trust_remote_code, revision=revision
+                # )
+            # else:
             self._config = AutoConfig.from_pretrained(
                 pretrained, trust_remote_code=trust_remote_code, revision=revision
             )
@@ -192,6 +208,15 @@ class VLLM(TemplateLM):
             def run_inference_one_model(
                 model_args: dict, sampling_params, requests: List[List[int]]
             ):
+                if 'model' in model_args and any([model_str in model_args['model'] for model_str in ['labrador_7b_pretrained']]):
+                    from ibm_models import GPTMegatronConfig
+                    from transformers import CONFIG_MAPPING
+                    CONFIG_MAPPING['gpt_megatron'] = GPTMegatronConfig
+                    # import torch
+                    # print(torch.cuda.is_available())
+                    # print('HEREHEREHERE')
+                    # input('=-=-=-')
+
                 llm = LLM(**model_args)
                 return llm.generate(
                     prompt_token_ids=requests, sampling_params=sampling_params
