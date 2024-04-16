@@ -10,6 +10,7 @@ from . import (
     optimum_lm,
     textsynth,
     vllm_causallms,
+    ibm_genai
 )
 
 
