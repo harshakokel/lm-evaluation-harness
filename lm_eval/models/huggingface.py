@@ -466,6 +466,12 @@ class HFLM(TemplateLM):
         revision: str = "main",
         trust_remote_code: bool = False,
     ) -> None:
+        
+        if any([model_str in pretrained for model_str in ['labrador_7b_pretrained']]):
+            from transformers import CONFIG_MAPPING
+            from ibm_models import GPTMegatronConfig
+            CONFIG_MAPPING['gpt_megatron'] = GPTMegatronConfig
+
         self._config = transformers.AutoConfig.from_pretrained(
             pretrained,
             revision=revision,
