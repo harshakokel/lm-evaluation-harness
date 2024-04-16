@@ -3,6 +3,7 @@ env
 output/
 data/
 lm_cache
+.cache
 .idea
 build
 dist
