@@ -31,7 +31,10 @@ try:
 except ImportError:
     ...
 
+import logging
 
+logging.getLogger("httpx").setLevel(logging.WARN)
+logging.getLogger("genai").setLevel(logging.WARN)
 
 class LogLikelihoodResult(NamedTuple):
     log_likelihood: float
