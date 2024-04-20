@@ -186,6 +186,7 @@ class IBMGenAILMEval(LM):
 
     @property
     def _log_likelihood_parameters(self):
+        truncate_input_tokens = self.model_token_limit - 1
         return TextGenerationParameters.model_validate(
             {
                 **self._parameters.model_dump(),
@@ -195,6 +196,8 @@ class IBMGenAILMEval(LM):
                     token_logprobs=True,
                     token_ranks=True,
                 ),
+                "truncate_input_tokens": truncate_input_tokens,
+
             }
         )
 
@@ -218,7 +221,7 @@ class IBMGenAILMEval(LM):
         contexts_tokenized = list(self._tokenize([context for context, _ in requests]))
         generation_inputs = [context + continuation for context, continuation in requests]
 
-        pb = tqdm(desc="Running text generation", total=len(contexts_tokenized), disable=not self._show_progressbar)
+        pb = tqdm(desc="Running loglikelihood", total=len(contexts_tokenized), disable=not self._show_progressbar)
         for response, context_tokens in zip(
             self._client.text.generation.create(
                 model_id=self._model_id,
@@ -230,6 +233,8 @@ class IBMGenAILMEval(LM):
         ):
             pb.update(len(response.results))
             for result in response.results:
+                print("generated token count :=: "+ str(result.generated_token_count))
+                print("input token count :=: "+ str(result.input_token_count))
                 results.append(self._get_log_likelihood(result.input_tokens, context_tokens))
         pb.close()
         return cast(list[tuple[float, bool]], results)
@@ -259,6 +264,8 @@ class IBMGenAILMEval(LM):
             ),
         ):
             for result in response.results:
+                print("generated token count :=: "+ str(result.generated_token_count))
+                print("input token count :=: "+ str(result.input_token_count))
                 results.append(self._get_log_likelihood(result.input_tokens, []))
 
         return cast(list[tuple[float, bool]], results)
@@ -314,6 +321,11 @@ class IBMGenAILMEval(LM):
             for response in self._client.text.generation.create(
                 model_id=self._model_id, inputs=inputs, parameters=parameters
             ):
+                # print("====S=====")
+                for result in response.results:
+                    print("generated token count :=: "+ str(result.generated_token_count))
+                    print("input token count :=: "+ str(result.input_token_count))
+                # print("=====E====")
                 results[key].extend(result.generated_text for result in response.results)
                 pb.update(len(response.results))
 
