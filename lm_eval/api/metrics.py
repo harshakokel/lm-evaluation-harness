@@ -179,6 +179,22 @@ def exact_match_fn(**kwargs):
 
 
 @register_metric(
+    metric="exact_match_mean_k",
+    output_type="generate_until",
+    aggregation="mean",
+    higher_is_better=True,
+)
+def exact_match_list_fn(**kwargs):
+    kwargs['references'] = ["".join(kwargs['references'][0])]
+    result=[]
+    for p in kwargs['predictions'][0]:
+        _kw_args = kwargs.copy()
+        _kw_args['predictions'][0]=p
+        result.append(exact_match.compute(**_kw_args)['exact_match'])
+    return mean(result)
+
+
+@register_metric(
     metric="perplexity",
     higher_is_better=False,
     output_type="loglikelihood",
