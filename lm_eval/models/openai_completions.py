@@ -213,8 +213,8 @@ class OpenaiCompletionsLM(TemplateLM):
                 model=self.model,
                 prompt=inps,
                 echo=True,
-                max_tokens=0,
-                temperature=0.0,
+                # max_tokens=0,
+                # temperature=0.0,
                 logprobs=10,
                 seed=self.seed,
             )
@@ -275,8 +275,8 @@ class OpenaiCompletionsLM(TemplateLM):
                 client=self.client,
                 model=self.model,
                 prompt=inps,
-                max_tokens=self.max_gen_toks,
-                stop=until,
+                # max_tokens=self.max_gen_toks,
+                # stop=until,
                 seed=self.seed,
                 **{
                     k: v
@@ -438,8 +438,8 @@ class OpenaiChatCompletionsLM(LM):
                             raise ValueError(
                                 f"Expected repr(kwargs['until']) to be of type Union[str, list] but got {until}"
                             )
-                        kwargs["stop"] = until
-                    kwargs["max_tokens"] = kwargs.pop("max_gen_toks", self.max_gen_toks)
+                        # kwargs["stop"] = until
+                    # kwargs["max_tokens"] = kwargs.pop("max_gen_toks", self.max_gen_toks)
                 else:
                     raise ValueError(
                         f"Expected repr(kwargs) to be of type repr(dict) but got {kwargs}"
