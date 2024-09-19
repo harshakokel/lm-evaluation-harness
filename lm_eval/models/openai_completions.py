@@ -218,7 +218,7 @@ class OpenaiCompletionsLM(TemplateLM):
                 logprobs=10,
                 seed=self.seed,
             )
-
+            print("USAGE: ", response.usage)
             for resp, ctxlen, (cache_key, context_enc, continuation_enc) in zip(
                 response.choices, ctxlens, chunk
             ):
@@ -284,6 +284,7 @@ class OpenaiCompletionsLM(TemplateLM):
                     if k not in ["do_sample", "max_gen_toks", "until"]
                 },
             )
+            print("USAGE: ", response.usage)
             for resp, (context, args_) in zip(response.choices, chunk):
                 s = getattr(resp, "text")
 
@@ -452,7 +453,7 @@ class OpenaiChatCompletionsLM(LM):
                     model=self.model,
                     **kwargs,
                 )
-
+                print("USAGE: ", response.usage)
                 for resp, (context, args_) in zip(response.choices, chunk):
                     s = resp.message.content
 
