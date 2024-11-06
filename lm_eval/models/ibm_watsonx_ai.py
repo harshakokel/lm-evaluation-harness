@@ -97,6 +97,9 @@ class WatsonxLLM(LM):
             )
 
         args = simple_parse_args_string(arg_string)
+        if isinstance(config_path,dict):
+            args.update(config_path)
+            config_path=None
         model_id = args.pop("model_id", None)
         if model_id is None:
             raise ValueError("'model_id' is required, please pass it in 'model_args'")
@@ -252,9 +255,22 @@ class WatsonxLLM(LM):
         Returns:
             List[str]: A List of generated responses.
         """
+        generation_kwargs=requests[0].args[1]
         requests = [request.args[0] for request in requests]
         results = []
         batch_size = 5
+
+        if  generation_kwargs is not None:
+            from ibm_watsonx_ai.metanames import GenTextParamsMetaNames as GenParams
+            new_generate_params = {
+                GenParams.DECODING_METHOD: (
+                    "greedy" if not generation_kwargs.get("do_sample", None) else "sample"
+                ),
+                GenParams.TEMPERATURE: generation_kwargs.get("temperature", None),
+                GenParams.MAX_NEW_TOKENS: generation_kwargs.get("max_gen_toks", 256),
+                GenParams.STOP_SEQUENCES: generation_kwargs.get("until", None),
+            }
+            self.generate_params.update(new_generate_params)
 
         for i in tqdm(
             range(0, len(requests), batch_size),
