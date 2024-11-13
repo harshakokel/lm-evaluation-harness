@@ -279,3 +279,22 @@ class OpenAIChatCompletion(LocalChatCompletion):
             output.pop("stop")
             output["temperature"] = 1
         return output
+
+
+@register_model("RITS-completions")
+class RITSCompletionsAPI(LocalCompletionsAPI):
+    
+    @cached_property
+    def header(self) -> dict:
+        """Adding RITS API Key in the header."""
+        return { "RITS_API_KEY": self.api_key}
+    
+    @property
+    def api_key(self):
+        """Override this property to return the API key for the API request."""
+        key = os.environ.get("RITS_API_KEY", None)
+        if key is None:
+            raise ValueError(
+                "API key not found. Please set the `RITS_API_KEY` environment variable."
+            )
+        return key
