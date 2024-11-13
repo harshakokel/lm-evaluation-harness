@@ -281,7 +281,7 @@ class OpenAIChatCompletion(LocalChatCompletion):
         return output
 
 
-@register_model("RITS-completions")
+@register_model("rits-completions")
 class RITSCompletionsAPI(LocalCompletionsAPI):
     
     @cached_property
