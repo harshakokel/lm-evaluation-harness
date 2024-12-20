@@ -298,3 +298,34 @@ class RITSCompletionsAPI(LocalCompletionsAPI):
                 "API key not found. Please set the `RITS_API_KEY` environment variable."
             )
         return key
+
+
+
+@register_model("azure-openai-chat-completions")
+class AzureOpenAICompletionsAPI(LocalChatCompletion):
+    
+    def __init__(self,base_url=None,
+        api_version=None,
+        **kwargs,
+    ):
+        super().__init__(
+            base_url=base_url+"?api-version="+api_version, **kwargs
+        )
+    
+    @cached_property
+    def header(self) -> dict:
+        """Adding  API Key in the header."""
+        return { "api-key": self.api_key}
+    
+    @property
+    def api_key(self):
+        """Override this property to return the API key for the API request."""
+        key = os.environ.get("AZURE_OPENAI_API_KEY", None)
+        if key is None:
+            raise ValueError(
+                "API key not found. Please set the `AZURE_OPENAI_API_KEY` environment variable."
+            )
+        return key
+
+
+
