@@ -567,35 +567,40 @@ class TemplateAPI(TemplateLM):
         if self._concurrent <= 1:
             pbar = tqdm(desc="Requesting API", total=len(requests))
             for chunk in chunked:
-                contexts, all_gen_kwargs, encodings_list = zip(*chunk)
-                req = encodings_list if self.tokenized_requests else contexts
-                outputs = retry(
-                    stop=stop_after_attempt(self.max_retries),
-                    wait=wait_exponential(multiplier=0.5, min=1, max=10),
-                    reraise=True,
-                )(self.model_call)(
-                    messages=req,
-                    generate=True,
-                    gen_kwargs=copy.deepcopy(all_gen_kwargs[0]),
-                )
-                for generated_text, context in zip(
-                    self.parse_generations(
-                        outputs=outputs,
-                        contexts=contexts,
-                    ),
-                    contexts,
-                ):
-                    if generated_text is not None:
-                        res.append(generated_text)
+                try:
+                    contexts, all_gen_kwargs, encodings_list = zip(*chunk)
+                    req = encodings_list if self.tokenized_requests else contexts
+                    outputs = retry(
+                        stop=stop_after_attempt(self.max_retries),
+                        wait=wait_exponential(multiplier=0.5, min=1, max=10),
+                        reraise=True,
+                    )(self.model_call)(
+                        messages=req,
+                        generate=True,
+                        gen_kwargs=copy.deepcopy(all_gen_kwargs[0]),
+                    )
+                    for generated_text, context in zip(
+                        self.parse_generations(
+                            outputs=outputs,
+                            contexts=contexts,
+                        ),
+                        contexts,
+                    ):
+                        if generated_text is not None:
+                            res.append(generated_text)
 
-                        # partial caching
-                        if context is not None:
-                            self.cache_hook.add_partial(
-                                "generate_until",
-                                (context, all_gen_kwargs[0]),
-                                generated_text,
-                            )
-                            pbar.update(1)
+                            # partial caching
+                            if context is not None:
+                                self.cache_hook.add_partial(
+                                    "generate_until",
+                                    (context, all_gen_kwargs[0]),
+                                    generated_text,
+                                )
+                                pbar.update(1)
+                except Exception as e:
+                    res.append("FAILED with exception: "+ str(e))
+                    print("Failed for chunk: ", chunk)
+                    print("Exception: ", e)
         else:
             for chunk in chunked:
                 contexts, all_gen_kwargs, encodings_list = zip(*chunk)
