@@ -147,7 +147,7 @@ class LocalChatCompletion(LocalCompletionsAPI):
             "seed": seed,
             **gen_kwargs,
         }
-
+            
     @staticmethod
     def parse_generations(outputs: Union[Dict, List[Dict]], **kwargs) -> List[str]:
         res = []
@@ -157,7 +157,7 @@ class LocalChatCompletion(LocalCompletionsAPI):
             for choices in out["choices"]:
                 if "content" in choices["message"]:
                     res.append(choices["message"]["content"])
-                if "refusal" in choices["message"]:
+                elif "refusal" in choices["message"]:
                     res.append("NO RESPONSE. Refusal: "+str(choices["message"]["refusal"]))
                 else:
                     print("Content not found: ", choices["message"])
@@ -335,6 +335,44 @@ class AzureOpenAICompletionsAPI(LocalChatCompletion):
             base_url=base_url+"?api-version="+api_version, **kwargs
         )
     
+    def _create_payload(
+        self,
+        messages: List[Dict],
+        generate=False,
+        gen_kwargs: dict = None,
+        seed=1234,
+        **kwargs,
+    ) -> dict:
+        assert (
+            type(messages) is not str
+        ), "chat-completions require the --apply_chat_template flag."
+        gen_kwargs.pop("do_sample", False)
+        if "max_tokens" in gen_kwargs:
+            max_tokens = gen_kwargs.pop("max_tokens")
+        else:
+            max_tokens = gen_kwargs.pop("max_gen_toks", self._max_gen_toks)
+        temperature = gen_kwargs.pop("temperature", 0)
+        stop = gen_kwargs.pop("until", ["<|endoftext|>"])
+        if not isinstance(stop, (list, tuple)):
+            stop = [stop]
+        output = {
+            "messages": messages,
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "stop": stop[:4],
+            "seed": seed,
+            **gen_kwargs,
+        }
+        if "o1" in self.base_url:
+            output.pop("stop")
+            output.pop("max_tokens")
+            output['max_completion_tokens'] = max_tokens
+            output["temperature"] = 1
+        return output
+
+     
+     
     @cached_property
     def header(self) -> dict:
         """Adding  API Key in the header."""
