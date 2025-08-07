@@ -294,3 +294,57 @@ class OpenAIChatCompletion(LocalChatCompletion):
         elif "o3" in self.model:
             output.pop("temperature")
         return output
+
+
+@register_model("rits-completions")
+class RITSCompletionsAPI(OpenAICompletionsAPI):
+    @cached_property
+    def header(self) -> dict:
+        """Adding RITS API Key in the header."""
+        return {"RITS_API_KEY": self.api_key}
+
+    @property
+    def api_key(self):
+        """Override this property to return the API key for the API request."""
+        key = os.environ.get("RITS_API_KEY", None)
+        if key is None:
+            raise ValueError(
+                "API key not found. Please set the `RITS_API_KEY` environment variable."
+            )
+        return key
+
+
+@register_model("rits-chat-completions")
+class RITSChatCompletionsAPI(OpenAIChatCompletion):
+    @cached_property
+    def header(self) -> dict:
+        """Adding RITS API Key in the header."""
+        return {"RITS_API_KEY": self.api_key}
+
+    @property
+    def api_key(self):
+        """Override this property to return the API key for the API request."""
+        key = os.environ.get("RITS_API_KEY", None)
+        if key is None:
+            raise ValueError(
+                "API key not found. Please set the `RITS_API_KEY` environment variable."
+            )
+        return key
+
+    @staticmethod
+    def parse_generations(outputs: Union[Dict, List[Dict]], **kwargs) -> List[str]:
+        res = []
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+        for out in outputs:
+            tmp = [None] * len(out["choices"])
+            for choices in out["choices"]:
+                content = choices["message"]["content"]
+                if "reasoning_content" in choices["message"]:
+                    if content is None:
+                        content = ""
+                    content += " <reasoning_content_appended> "
+                    content += choices["message"]["reasoning_content"]
+                tmp[choices["index"]] = content
+            res = res + tmp
+        return res

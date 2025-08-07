@@ -8,13 +8,11 @@ output_type: generate_until
 num_fewshot: 2
 generation_kwargs:
   until:
-    - "\n\n\n\n"
-    - "\n\n"
     - "**Question**:"
     - "**Question:**"
     - "Q:"
   do_sample: false
-  max_gen_toks: 1000
+  max_gen_toks: 4000
   temperature: 0.0
 metadata:
   version: 1.0
